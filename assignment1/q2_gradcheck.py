@@ -1,36 +1,42 @@
-#!/usr/bin/env python
-
 import numpy as np
 import random
 
-
 # First implement a gradient checker by filling in the following functions
 def gradcheck_naive(f, x):
-    """ Gradient check for a function f.
-
-    Arguments:
-    f -- a function that takes a single argument and outputs the
-         cost and its gradients
-    x -- the point (numpy array) to check the gradient at
-    """
+    """ 
+    Gradient check for a function f 
+    - f should be a function that takes a single argument and outputs the cost and its gradients
+    - x is the point (numpy array) to check the gradient at
+    See: http://ufldl.stanford.edu/wiki/index.php/Gradient_checking_and_advanced_optimization
+    """ 
 
     rndstate = random.getstate()
-    random.setstate(rndstate)
+    random.setstate(rndstate)  
+    x=x.flatten() #vectorize
     fx, grad = f(x) # Evaluate function value at original point
-    h = 1e-4        # Do not change this!
+    h = 1e-4
+
 
     # Iterate over all indexes in x
     it = np.nditer(x, flags=['multi_index'], op_flags=['readwrite'])
     while not it.finished:
         ix = it.multi_index
 
-        # Try modifying x[ix] with h defined above to compute
-        # numerical gradients. Make sure you call random.setstate(rndstate)
-        # before calling f(x) each time. This will make it possible
-        # to test cost functions with built in randomness later.
-
+        ### try modifying x[ix] with h defined above to compute numerical gradients
+        ### make sure you call random.setstate(rndstate) before calling f(x) each time, this will make it 
+        ### possible to test cost functions with built in randomness later
         ### YOUR CODE HERE:
-        raise NotImplementedError
+        random.setstate(rndstate)    
+        theta = np.zeros_like(x) 
+        theta[ix] = 1
+        theta_plus = h*theta
+        #a = f(x[ix]+h)[0]
+        a = f(x+theta_plus)[0]
+        random.setstate(rndstate)    
+        #b = f(x[ix]-h)[0]
+        theta_minus = -h*theta
+        b = f(x+theta_minus)[0]
+        numgrad = (a-b)/(2*h)
         ### END YOUR CODE
 
         # Compare gradients
@@ -38,14 +44,11 @@ def gradcheck_naive(f, x):
         if reldiff > 1e-5:
             print "Gradient check failed."
             print "First gradient error found at index %s" % str(ix)
-            print "Your gradient: %f \t Numerical gradient: %f" % (
-                grad[ix], numgrad)
+            print "Your gradient: %f \t Numerical gradient: %f" % (grad[ix], numgrad)
             return
-
         it.iternext() # Step to next dimension
 
     print "Gradient check passed!"
-
 
 def sanity_check():
     """
@@ -59,20 +62,30 @@ def sanity_check():
     gradcheck_naive(quad, np.random.randn(4,5))   # 2-D test
     print ""
 
-
-def your_sanity_checks():
+def your_sanity_checks(): 
     """
     Use this space add any additional sanity checks by running:
-        python q2_gradcheck.py
+        python q2_gradcheck.py 
     This function will not be called by the autograder, nor will
     your additional tests be graded.
     """
     print "Running your sanity checks..."
     ### YOUR CODE HERE
-    raise NotImplementedError
+    expon = lambda x: (np.sum(np.exp(x)), np.exp(x))
+    print "Running sanity checks..."
+    gradcheck_naive(expon, np.array(1.23456))      # scalar test
+    gradcheck_naive(expon, np.random.randn(3,))    # 1-D test
+    gradcheck_naive(expon, np.random.randn(4,5))   # 2-D test
+    print ""
+
+    exponm = lambda x: (np.sum(np.exp(2*x)), 2*np.exp(2*x))
+    print "Running sanity checks..."
+    gradcheck_naive(exponm, np.array(1.23456))      # scalar test
+    gradcheck_naive(exponm, np.random.randn(3,))    # 1-D test
+    gradcheck_naive(exponm, np.random.randn(4,5))   # 2-D test
+    print ""
     ### END YOUR CODE
 
-
 if __name__ == "__main__":
-    sanity_check()
+#    sanity_check()
     your_sanity_checks()
